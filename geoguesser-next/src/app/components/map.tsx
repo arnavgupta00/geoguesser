@@ -20,6 +20,7 @@ interface MapComponentProps {
   latitude: number;
   longitude: number;
   setMarkerLocation: any;
+  imageTracker: any;
 }
 
 export default function MapComponent(props: MapComponentProps) {
@@ -81,9 +82,9 @@ export default function MapComponent(props: MapComponentProps) {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
-      style: "mapbox://styles/arnavgupta3035/clxw42zuj00b801pf1mqrhqs0",
-      center: [longitude, latitude],
-      zoom: viewport.zoom,
+      style: "mapbox://styles/arnavgupta3035/clybw4tif00kh01qpaj6v1tmc",
+      center: [76.3694134736134, 30.354930565106628],
+      zoom: 17,
 
       // maxBounds: [
       //   [bbox.minLon, bbox.minLat],
@@ -95,114 +96,104 @@ export default function MapComponent(props: MapComponentProps) {
       map.resize();
     });
 
-    //     const createMarkerElement = (imageUrl: string, temperature: any) => {
-    //       const el = document.createElement("div");
-    //       el.className = "marker";
+    const createMarkerElement = () => {
+      // Create the main container for the marker
+      const markerContainer = document.createElement("div");
+      markerContainer.style.display = "flex";
+      markerContainer.style.flexDirection = "column";
+      markerContainer.style.alignItems = "center";
 
-    //       // Create an inner container for the image and temperature
-    //       const container = document.createElement("div");
-    //       container.style.display = "flex";
-    //       container.style.flexDirection = "column";
-    //       container.style.alignItems = "center";
+      // Create the circular red part of the marker
+      const circle = document.createElement("div");
+      circle.style.width = "12px";
+      circle.style.height = "12px";
+      circle.style.backgroundColor = "#6C63FF";
+      circle.style.borderRadius = "50%";
+      circle.style.boxShadow = "0 0 5px rgba(0, 0, 0, 0.3)";
+      circle.style.position = "relative";
+      circle.style.top = "0px"; // Adjust as needed
 
-    //       // Create the image element
-    //       const img = document.createElement("div");
-    //       img.style.backgroundImage = `url(${imageUrl})`;
-    //       img.style.width = "25px";
-    //       img.style.height = "25px";
-    //       img.style.backgroundSize = "100%";
+      // Create the stem part of the marker
+      const stem = document.createElement("div");
+      stem.style.width = "2px";
+      stem.style.height = "15px";
+      stem.style.backgroundColor = "black";
+      stem.style.marginTop = "-2px"; // Slight overlap with the circle
 
-    //       // Create the temperature element
-    //       const temp = document.createElement("div");
-    //       temp.style.color = "black";
-    //       temp.style.fontSize = "12px";
-    //       temp.textContent = `${temperature}°C`;
+      // Append the circle and stem to the container
+      markerContainer.appendChild(circle);
+      markerContainer.appendChild(stem);
 
-    //       // Append the image and temperature to the container
-    //       container.appendChild(img);
-    //       container.appendChild(temp);
+      return markerContainer;
+    };
 
-    //       // Append the container to the marker element
-    //       el.appendChild(container);
+    const addMarker = async (lng: number, lat: number) => {
+      try {
+        // Create a red marker element
+        const markerElement = createMarkerElement();
 
-    //       return el;
-    //     };
+        // Create a Mapbox popup if needed (example, but you might not need this)
+        const popup = new mapboxgl.Popup({ offset: 25 })
+          .setLngLat([lng, lat])
+          .setDOMContent(markerElement)
+          .addTo(map);
 
-    //     const addMarker = async (lng: number, lat: number) => {
-    //       try {
-    //         const weather = await fetchData(
-    //           lat,
-    //           lng,
-    //           props.selectedValue,
-    //           props.selectedTime
-    //         );
+        // Create the marker using Mapbox
+        const marker = new mapboxgl.Marker({
+          element: markerElement,
+        })
+          .setLngLat([lng, lat])
+          .setPopup(popup)
+          .addTo(map);
 
-    //         const el = document.createElement("div");
-    //         el.className = "weather-marker";
-    //         el.innerHTML = `<div style="display: flex; align-items: center; gap: 10px; background-color: #f8f8f8; padding: 10px; border-radius: 8px;">
-    //   <img src="${weather.weather}" style="width: 50px; height: 50px;" alt="${
-    //           weather.weather
-    //         }" />
-    //   <div>
-    //     <div style="font-size: 1.2em; color: #213547; font-weight: bold;">${
-    //       weather.temp
-    //     }°C</div>
-    //     <a href="${
-    //       "/city-search/" + lat + "/" + lng
-    //     }" style="color: #213547; text-decoration: underline; font-size: 0.9em;">Details</a>
-    //   </div>
-    // </div>`;
+        markersRef.current.push(marker);
 
-    //         const popup = new mapboxgl.Popup({ offset: 25 })
-    //           .setLngLat([lng, lat])
-    //           .setDOMContent(el)
-    //           .addTo(map);
+        popup.on("close", ()=>{
 
-    //         const marker = new mapboxgl.Marker({
-    //           element: createMarkerElement(weather.weather as string, weather.temp),
-    //         })
-    //           .setLngLat([lng, lat])
-    //           .setPopup(popup)
-    //           .addTo(map);
+        });
 
-    //         markersRef.current.push(marker);
-    //         popup.addTo(map);
+        // function handleClose() {
+        //   const index = markersRef.current.indexOf(marker);
+        //   if (index !== -1) {
+        //     markersRef.current.splice(index, 1);
+        //   }
+        //   marker.remove();
+        //   popup.remove();
 
-    //         popup.on("close", handleClose);
+        //   // Remove the event listener after handling the close event
+        //   popup.off("close", handleClose);
+        // }
 
-    //         function handleClose() {
-    //           const index = markersRef.current.indexOf(marker);
-    //           if (index !== -1) {
-    //             markersRef.current.splice(index, 1);
-    //           }
-    //           marker.remove();
-    //           popup.remove();
+        popup.on("open", () => {
+          const index = markersRef.current.indexOf(marker);
+          if (index === -1) {
+            markersRef.current.push(marker);
+          }
+        });
+      } catch (error) {
+        console.log("Maximum call stack exceeded");
+      }
+    };
 
-    //           // Remove the event listener after handling the close event
-    //           popup.off("close", handleClose);
-    //         }
-
-    //         popup.on("open", () => {
-    //           const index = markersRef.current.indexOf(marker);
-    //           if (index === -1) {
-    //             markersRef.current.push(marker);
-    //           }
-    //         });
-    //       } catch (error) {
-    //         console.log("Maximum call stack exceeded");
-    //       }
-    //     };
+    const removeMarkers = () => {
+      for (const marker of markersRef.current) {
+        marker.remove();
+      }
+      markersRef.current = [];
+    };
 
     map.on(
       "click",
-      
+
       async (e) => {
         console.log("Click event:", e);
-        
+
+        try {
+          removeMarkers();
+        } catch (error) {}
         const { lng, lat } = e.lngLat;
-        alert(`Click event: ${lng} ${lat}`);
         props.setMarkerLocation({ latitude: lat, longitude: lng });
-        console.log("Click coordinates:", lng, lat);
+        addMarker(lng, lat);
       }
     );
   };
@@ -239,11 +230,14 @@ export default function MapComponent(props: MapComponentProps) {
         console.error("Error fetching geolocation:", error);
       }
     );
-  }, []);
+  }, [props.imageTracker]);
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
-      <div ref={mapContainerRef} style={{ width: "100%", height: "300px" , borderRadius:"15px" }} />
+      <div
+        ref={mapContainerRef}
+        style={{ width: "100%", height: "300px", borderRadius: "15px" }}
+      />
       {/* <ul>
         {visibleLabels.map((label, index) => (
           <li key={index}>{label.name} ({label.latitude}, {label.longitude})</li>
